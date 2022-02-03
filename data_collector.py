@@ -163,5 +163,14 @@ class MarketOpenUnique(SQLAlchemyConnector):
 		self.unique_date()
 
 if __name__ ==  '__main__':
-	mou = MarketOpenUnique()
-	mou.execute()
+	"""csv -> db_table(raw_price_info)"""
+	dtct = DataCollector()
+	dtct.execute_updater()
+
+	"""marcket open date -> db_table(market_open_info)"""
+	# mod = MarketOpenDate()
+	# mod.market_open_date()
+	
+	"""unique open date -> db_table(unique_date, unique_code)"""
+	# mou = MarketOpenUnique()
+	# mou.execute()

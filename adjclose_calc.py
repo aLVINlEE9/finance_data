@@ -92,5 +92,6 @@ class AdjClose_Calc(SQLAlchemyConnector):
 
 
 if __name__ == "__main__":
-	adj = AdjClose_Calc()
-	adj.calc()
+	"""takes long time!!"""
+	# adj = AdjClose_Calc()
+	# adj.calc()

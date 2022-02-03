@@ -58,5 +58,6 @@ class Update_priceinfo(SQLAlchemyConnector):
 				cnt_ex += 1
 
 if __name__ == "__main__":
+	"""kospi adj close data"""
 	udpi = Update_priceinfo()
 	udpi.update()

@@ -24,6 +24,6 @@ class DataRead(SQLAlchemyConnector):
 		# plt.show()
 
 if __name__ == "__main__":
-	"""read object"""
+	"""read objecta"""
 	dr = DataRead()
 	dr.grapher("005930")

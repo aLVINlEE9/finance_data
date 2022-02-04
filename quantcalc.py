@@ -15,62 +15,78 @@ class SQLAlchemyConnector:
 
 class ProfitCalc(SQLAlchemyConnector):
 
-	def __init__(self, term, codes):
+	def __init__(self, end_date, start_date, term, codes):
 		super().__init__()
+		self.end_date = end_date
+		self.start_date = start_date
 		self.term = term
 		self.codes = codes
-		self.start_date = []
-		self.end_date = []
+		self.ref_date = []
 		self.prices = []
 		self.get_profit()
 
 
-	def get_marketopen_date(self):
-		query = f"SELECT Date FROM unique_date WHERE Date >= '{self.start_date}' AND "\
-				f"Date <= '{self.end_date}'"
+	def get_marketopen_date(self, start_date, end_date):
+		query = f"SELECT Date FROM unique_date WHERE Date >= '{start_date}' AND "\
+				f"Date <= '{end_date}'"
 		code_df = pd.read_sql(query, con = self.engine)
 		code_np = code_df.to_numpy()
 		return (code_np[0], code_np[-1])
 
 
-	def is_valid_date(self, start_date, end_date):
-		r_start_date, r_end_date = self.get_marketopen_date()
-		if (r_start_date == start_date and r_end_date == end_date):
+	def is_valid_date(self, start_date, end_date, d_start_date, d_end_date):
+		r_start_date, r_end_date = self.get_marketopen_date(start_date, end_date)
+		if (r_start_date == d_start_date and r_end_date == d_end_date):
 			return (True)
 		else:
 			return (False)
 
 
 	def rebalancing(self):
-		if self.term < 12:
-			[f"{date(2021, month, 31)}" if 12 - month % self.term else month for month in range(1, 12, -1)]
-		elif self.term >= 12:
-			[f"{date(year, month, 31)}" if self.term % 12 else year if 12 - month % self.term else month for year, month in zip(range(x), range(1, self.term + 1, -1)]
+		num_months = (self.end_date.year - self.start_date.year) * 12 + (self.end_date.month - self.start_date.month)
+		n_month = self.end_date.month
+		while(self.start_date < self.end_date):
+			temp = self.end_date
+			self.end_date -= relativedelta(months = self.term)
+			self.ref_date.append([self.end_date, temp - timedelta(days = 1)])
+
 
 	def get_price(self, code, start_date, end_date):
 		query = f"SELECT AdjClose, Date FROM adjclose WHERE Code = '{code}'"
 		code_df = pd.read_sql(query, con = self.engine)
 		code_np = code_df.to_numpy()
-		code_np = code_np[(code_np[:, 1] >= start_date) & (code_np[:, 1] <= end_date)]
-		start_date = code_np[0][1]
-		end_date = code_np[-1][1]
-		if self.is_valid_date(start_date, end_date):
-			return (code_np[0][0], code_np[-1][0])
-		return (False)
+		try:
+			code_np = code_np[(code_np[:, 1] >= start_date) & (code_np[:, 1] <= end_date)]
+			d_start_date = code_np[0][1]
+			d_end_date = code_np[-1][1]
+			if self.is_valid_date(start_date, end_date, d_start_date, d_end_date) and \
+				(code_np[0][0] != None or code_np[-1][0]):
+				return (code_np[0][0], code_np[-1][0])
+			return (False)
+		except Exception as e:
+			print(f"{e} {code} : {start_date}, {end_date}")
 
 
 	def get_profit(self):
-		self.start_date, self.end_date = self.rebalancing()
-		for term in 
-		for code in self.codes:
-			self.prices.append(self.get_price(code, self.start_date, self.end_date))
-		for code, price in zip(self.codes, self.prices):
+		self.rebalancing()
+		for rf_start, rf_end in self.ref_date:
+			for code in self.codes:
+				self.prices.append([self.get_price(code, rf_start, rf_end), code])
+		print(self.prices)
+		for price, code in self.prices:
 			profit = False
 			if price != False:
 				profit = price[1] / price[0] * 100 - 100
-			print(code, profit, "%")
+			print(code, profit)
+		# for code, price in zip(self.codes, self.prices):
+		# 	profit = False
+		# 	if price != False:
+		# 		profit = price[1] / price[0] * 100 - 100
+		# 	print(code, profit, "%")
 
 
 if __name__ == "__main__":
+	end_date = date(2021, 12, 31)
+	start_date = date(2019, 12, 31)
 	codes = ['005930', '395400', '259960', '026890']
-	pc = ProfitCalc(12, codes)
+	pc = ProfitCalc(end_date, start_date, 5, codes)

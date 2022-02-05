@@ -72,7 +72,18 @@ class ProfitCalc(SQLAlchemyConnector):
 
 
 	def grapher(self, data):
-		plt.plot([row[1] for row in data], [row[0] for row in data])
+		raw_profit =  [row[0] for row in data]
+		profit = []
+		for i in range(len(raw_profit) - 1, -1, -1):
+			if i == len(raw_profit) - 1:
+				temp = raw_profit[i]
+				profit.append(temp)
+				continue
+			temp += raw_profit[i]
+			profit.append(temp)
+		date = [row[1] for row in data]
+		date.reverse()
+		plt.plot(date, profit)
 		plt.show()
 
 
@@ -90,7 +101,7 @@ class ProfitCalc(SQLAlchemyConnector):
 					self.prices.append([get_price[0], get_price[1], code])
 			self.mean.append([sum / cnt, date])
 		self.grapher(self.mean)
-		print(geometric_mean([row[0] for row in self.mean]))
+		print(f"average profit : {geometric_mean([row[0] for row in self.mean])}")
 
 
 

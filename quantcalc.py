@@ -1,8 +1,11 @@
 from random import seed
 from turtle import st
+import matplotlib.pyplot as plt 
 import numpy as np
 import pandas as pd
-from datetime import datetime, date
+from statistics import geometric_mean
+from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
 import sqlalchemy as db
 
 
@@ -23,6 +26,7 @@ class ProfitCalc(SQLAlchemyConnector):
 		self.codes = codes
 		self.ref_date = []
 		self.prices = []
+		self.mean = []
 		self.get_profit()
 
 
@@ -61,28 +65,33 @@ class ProfitCalc(SQLAlchemyConnector):
 			d_end_date = code_np[-1][1]
 			if self.is_valid_date(start_date, end_date, d_start_date, d_end_date) and \
 				(code_np[0][0] != None or code_np[-1][0]):
-				return (code_np[0][0], code_np[-1][0])
+				return (code_np[-1][0] / code_np[0][0] * 100 - 100 , d_end_date)
 			return (False)
 		except Exception as e:
 			print(f"{e} {code} : {start_date}, {end_date}")
 
 
+	def grapher(self, data):
+		plt.plot([row[1] for row in data], [row[0] for row in data])
+		plt.show()
+
+
 	def get_profit(self):
 		self.rebalancing()
 		for rf_start, rf_end in self.ref_date:
+			sum = 0
+			cnt = 0
 			for code in self.codes:
-				self.prices.append([self.get_price(code, rf_start, rf_end), code])
-		print(self.prices)
-		for price, code in self.prices:
-			profit = False
-			if price != False:
-				profit = price[1] / price[0] * 100 - 100
-			print(code, profit)
-		# for code, price in zip(self.codes, self.prices):
-		# 	profit = False
-		# 	if price != False:
-		# 		profit = price[1] / price[0] * 100 - 100
-		# 	print(code, profit, "%")
+				get_price = self.get_price(code, rf_start, rf_end)
+				if get_price != None and get_price != False:
+					sum += get_price[0]
+					cnt += 1
+					date = get_price[1]
+					self.prices.append([get_price[0], get_price[1], code])
+			self.mean.append([sum / cnt, date])
+		self.grapher(self.mean)
+		print(geometric_mean([row[0] for row in self.mean]))
+
 
 
 if __name__ == "__main__":

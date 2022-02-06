@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from connect import SQLAlchemyConnector
 import dart_fss as dart
-from dart_fss import get_corp_list
+from dart_fss import get_corp_list, fs
 
 class DartDataCollecter(SQLAlchemyConnector):
 	def __init__(self):
@@ -12,6 +12,7 @@ class DartDataCollecter(SQLAlchemyConnector):
 		self.get_authorize()
 		self.create_table()
 		self.get_code()
+		self.len = len(self.codes)
 		
 
 	def get_authorize(self):
@@ -26,8 +27,8 @@ class DartDataCollecter(SQLAlchemyConnector):
 				corp_name VARCHAR(20),
 				stock_code VARCHAR(20),
 				modify_date VARCHAR(20),
-				sector VARCHAR(100),
-				product VARCHAR(100),
+				sector VARCHAR(200),
+				product VARCHAR(200),
 				corp_cls VARCHAR(20),
 				PRIMARY KEY (corp_code, stock_code))
 			"""
@@ -45,11 +46,20 @@ class DartDataCollecter(SQLAlchemyConnector):
 	def apostrophe_out(self, str):
 		str = str.replace("'", " ")
 		str = str.replace("`", " ")
+		str = str.replace("%", ".pct")
 		return (str)
 
 
-	def crp_code(self):
-		code_len = len(self.codes)
+	def get_crp_code(self):
+		query = f"SELECT corp_code,stock_code FROM dart_crpcode"
+		df = pd.read_sql(query, con = self.engine)
+		corp_np = df.to_numpy()
+		return (corp_np)
+
+
+
+
+	def update_crp_code(self):
 		cnt = 0
 		for code in self.codes:
 			try:
@@ -61,16 +71,22 @@ class DartDataCollecter(SQLAlchemyConnector):
 						'{crp_list[2]}', '{crp_list[3]}', '{crp_list[4]}', \
 						'{self.apostrophe_out(crp_list[5])}', '{crp_list[6]}')"
 				result_proxy = self.connection.execute(query)
-				print(f"updating crp_code {code} : {cnt}/{code_len}")
+				# print(f"updating crp_code {code} : {cnt}/{code_len}")
 				result_proxy.close()
 			except Exception as e:
-				print(f"{e} : {code}")
+				print(f"{e} : {code} {cnt}/{self.len}")
 
 			cnt += 1
 
 
+	def update_financial_statement(self):
+		cnt = 0
+		for code in self.get_crp_code():
+			pass
+				
+
 
 if __name__ == "__main__":
 	udcl = DartDataCollecter()
-	udcl.crp_code()
+	udcl.update_crp_code()
 

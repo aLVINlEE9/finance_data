@@ -15,7 +15,7 @@ class DartDataCollecter(SQLAlchemyConnector):
 		
 
 	def get_authorize(self):
-		api_key = '293d36509ea35f06ea21c91e0b057d4b656eb624'
+		api_key = 'api_key'
 		dart.set_api_key(api_key=api_key)
 
 

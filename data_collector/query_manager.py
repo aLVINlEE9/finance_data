@@ -1,9 +1,11 @@
 from connect import SQLAlchemyConnector
 from data_preprocessor import DataPreprocessor
+import pandas as pd
 
 class QueryManager(SQLAlchemyConnector, DataPreprocessor):
 	def __init__(self):
 		super().__init__()
+
 
 
 	def create_raw_price_info_table(self):
@@ -44,6 +46,12 @@ class QueryManager(SQLAlchemyConnector, DataPreprocessor):
 			
 
 
+	def select_raw_price_info_table(self):
+		query = f"SELECT Date,Code FROM raw_price_info ORDER BY Date"
+		df = pd.read_sql(query, con = self.engine)
+		return (df)
+
+
 	def create_cur_comp_info_table(self):
 		query = """
 			CREATE TABLE IF NOT EXISTS cur_comp_info ( 
@@ -74,16 +82,45 @@ class QueryManager(SQLAlchemyConnector, DataPreprocessor):
 		self.print_replace_status('cur_comp_info', at, total, code)
 
 
+	def create_market_open_info_table(self):
+		query = """
+			CREATE TABLE IF NOT EXISTS market_open_info ( 
+				Date DATE,
+				Code VARCHAR(20),
+				PRIMARY KEY (Date, Code))
+			"""
+		result_proxy = self.connection.execute(query)
+		result_proxy.close()
+		self.print_create_status('market_open_info')
+
+
+	def replace_market_open_info_table(self, r, at, total):
+		query_2 = f"REPLACE INTO market_open_info VALUES ('{r.Date}', '{r.Code}')"
+		result_proxy = self.connection.execute(query_2)
+		result_proxy.close()
+		self.print_replace_status('market_open_info', at, total, r.Date)
+
+
+
 	def create_price_info_table(self):
 		query_1 = """
-			CREATE TABLE price_info AS SELECT * FROM raw_price_info
+			CREATE TABLE IF NOT EXISTS price_info ( 
+				Code VARCHAR(20),
+				Date DATE,
+				Open BIGINT(20),
+				High BIGINT(20),
+				Low BIGINT(20),
+				AdjClose BIGINT(20),
+				Volume BIGINT(20),
+				Change FLOAT(20),
+				PRIMARY KEY (Code, Date))
 			"""
 		result_proxy = self.connection.execute(query_1)
 		result_proxy.close()
 
-		query_2 = """
-			ALTER TABLE price_info ADD COLUMN AdjClose FLOAT(20) AFTER Close
-			"""
-		result_proxy = self.connection.execute(query_2)
+	def replace_price_info_table(self, code, r, at, total, at_code, total_code):
+		query = f"REPLACE INTO price_info VALUES ('{code}', '{self.to_date(r.Index)}', \
+				{r.Open}, {r.High}, {r.Low}, {r.Close}, {r.Volume}, {r.Change}"
+		result_proxy = self.connection.execute(query)
 		result_proxy.close()
-		self.print_create_status('price_info')
+		self.print_replace_status('price_info', at, total, at_code, total_code)

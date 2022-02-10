@@ -43,7 +43,7 @@ class DataCollector(QueryManager):
 
 	def get_price_info(self):
 		self.create_price_info_table()
-		self.codes = self.get_unique_code()
+		self.codes = self.get_cur_code()
 		total = len(self.codes)
 		at = 0
 		for code in self.codes:
@@ -51,7 +51,7 @@ class DataCollector(QueryManager):
 			total_code = len(df_adjclose)
 			at_code = 0
 			for r in df_adjclose.itertuples():
-				self.replace_price_info_table(r, code, at, total, at_code, total_code)
+				self.replace_price_info_table(code, r, at, total, at_code, total_code)
 				at_code+=1
 			at+=1
 
@@ -59,4 +59,6 @@ class DataCollector(QueryManager):
 if __name__ == "__main__":
 	dc = DataCollector()
 	# dc.get_raw_price_info() # 45min
-	dc.get_cur_comp_info()
+	# dc.get_cur_comp_info()
+	# dc.get_market_open_info()
+	# dc.get_price_info()

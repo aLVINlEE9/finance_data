@@ -44,6 +44,12 @@ class DataPreprocessor:
 		return (str(param)[:10])
 
 
+	def get_cur_code(self):
+		query = f"SELECT Symbol FROM cur_comp_info"
+		df = pd.read_sql(query, con = self.engine)
+		return (df["Symbol"].unique())
+
+
 	def get_unique_code(self):
 		unique_code_list = []
 		query_1 = f"SELECT Code FROM market_open_info"
@@ -63,12 +69,9 @@ class DataPreprocessor:
 		return ([str(year) for year in range(1995, 2023)])
 
 	def get_adjclose(self, code):
-		adjclose_df = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume', 'Change'], \
-									index=["Date"])
 		for year in self.year_gen():
 			df = fdr.DataReader(f'{code}', f'{year}')
-			if int(year) < df.index.values[0].astype('datetime64[Y]').astype(int) + 1970:
-				continue
-			adjclose_df.append(df)
-
-		return (adjclose_df)
+			if int(year) == df.index.values[0].astype('datetime64[Y]').astype(int) + 1970:
+				break
+		print(year, code)
+		return (df)

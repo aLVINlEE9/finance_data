@@ -107,12 +107,12 @@ class QueryManager(SQLAlchemyConnector, DataPreprocessor):
 			CREATE TABLE IF NOT EXISTS price_info ( 
 				Code VARCHAR(20),
 				Date DATE,
-				Open BIGINT(20),
-				High BIGINT(20),
-				Low BIGINT(20),
-				AdjClose BIGINT(20),
-				Volume BIGINT(20),
-				Change FLOAT(20),
+				Open VARCHAR(20),
+				High VARCHAR(20),
+				Low VARCHAR(20),
+				AdjClose VARCHAR(20),
+				Volume VARCHAR(20),
+				Changes VARCHAR(200),
 				PRIMARY KEY (Code, Date))
 			"""
 		result_proxy = self.connection.execute(query_1)
@@ -120,7 +120,7 @@ class QueryManager(SQLAlchemyConnector, DataPreprocessor):
 
 	def replace_price_info_table(self, code, r, at, total, at_code, total_code):
 		query = f"REPLACE INTO price_info VALUES ('{code}', '{self.to_date(r.Index)}', \
-				{r.Open}, {r.High}, {r.Low}, {r.Close}, {r.Volume}, {r.Change}"
+				'{r.Open}', '{r.High}', '{r.Low}', '{r.Close}', '{r.Volume}', '{r.Change}')"
 		result_proxy = self.connection.execute(query)
 		result_proxy.close()
 		self.print_replace_status('price_info', at, total, at_code, total_code)
